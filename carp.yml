@@ -1,0 +1,46 @@
+# This yml-file is only for local test purposes
+
+# Change the port of this url if you run the carp locally under another port
+base-url: https://localhost:8080
+cas-url: https://192.168.56.2/cas
+# Change the port of this url if you run the carp locally under another port
+service-url: https://localhost:8080/grafana/login
+# Change the port of this url if you run your local grafana under another port
+target-url: http://localhost:3000/grafana/login
+logout-method: GET
+logout-path: \/grafana\/(cas\/)?logout
+skip-ssl-verification: true
+# Change this port if you run the carp locally under another port
+port: 8080
+principal-header: X-WEBAUTH-USER
+role-header: X-WEBAUTH-ROLE
+mail-header: X-WEBAUTH-EMAIL
+name-header: X-WEBAUTH-NAME
+admin-username: admin
+admin-password: admin
+# Change the port of this url if you run your local grafana under another port
+create-user-endpoint: http://localhost:3000/grafana/api/admin/users
+# Change the port of this url if you run your local grafana under another port
+create-group-endpoint: http://localhost:3000/grafana/api/teams
+# Change the port of this url if you run your local grafana under another port
+get-user-groups-endpoint: http://localhost:3000/grafana/api/users/%v/teams
+# Change the port of this url if you run your local grafana under another port
+get-user-endpoint: http://localhost:3000/grafana/api/users/lookup?loginOrEmail=%s
+# Change the port of this url if you run your local grafana under another port
+remove-user-from-group-endpoint: http://localhost:3000/grafana/api/teams/%v/members/%v
+# Change the port of this url if you run your local grafana under another port
+add-user-to-group-endpoint: http://localhost:3000/grafana/api/teams/%v/members
+# Change the port of this url if you run your local grafana under another port
+search-team-by-name-endpoint: http://localhost:3000/grafana/api/teams/search?name=%s
+# Change the port of this url if you run your local grafana under another port
+set-organization-role-endpoint: http://localhost:3000/grafana/api/orgs/1/users/%v
+ces-admin-group: cesAdmin
+grafana-admin-group: admin
+grafana-writer-group: writer
+grafana-reader-group: reader
+log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
+log-level: DEBUG
+grafana-exec-command: "exit 0"
+carp-resource-path: /grafana/carp-static/
+
+
