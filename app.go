@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
-	"github.com/cloudogu/sonarcarp/config"
-	"github.com/cloudogu/sonarcarp/proxy"
-	"github.com/op/go-logging"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/cloudogu/sonarcarp/config"
+	"github.com/cloudogu/sonarcarp/proxy"
+	"github.com/op/go-logging"
 )
 
 var (
@@ -18,6 +19,11 @@ var (
 )
 
 func startGrafanaInBackground(configuration config.Configuration) {
+	// FIXME
+	if true {
+		return
+	}
+
 	log.Infof("Start Grafana in background..")
 	log.Debugf("Execute command '%s'", configuration.GrafanaExecCommand)
 	splitted := strings.Split("/opt/grafana/bin/grafana server --config /opt/grafana/conf/defaults.ini --config /opt/grafana/conf/custom.ini", " ")

@@ -1,6 +1,8 @@
 #!groovy
 @Library(['github.com/cloudogu/ces-build-lib@3.1.0', 'github.com/cloudogu/dogu-build-lib@v2.6.0'])
 import com.cloudogu.ces.cesbuildlib.*
+@Library(['github.com/cloudogu/ces-build-lib@3.1.0', 'github.com/cloudogu/dogu-build-lib@v2.6.0'])
+import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
 
 Git git = new Git(this, "cesmarvin")
@@ -32,10 +34,6 @@ node('docker') {
         dockerfile.lint()
     }
 
-    stage('Shellcheck') {
-        shellCheck("resources/startup.sh")
-    }
-
     stage('Check markdown links') {
         markdown.check()
     }
@@ -48,11 +46,6 @@ node('docker') {
         stage('Test carp') {
             sh "make carp-unit-test"
         }
-    }
-
-    stage('Bats Tests') {
-        Bats bats = new Bats(this, docker)
-        bats.checkAndExecuteTests()
     }
 
     stage('SonarQube') {
@@ -100,72 +93,8 @@ node('vagrant') {
                 disableConcurrentBuilds()
         ])
 
-        stage('Generate k8s Resources') {
-            docker.image("golang:${goVersion}")
-                    .mountJenkinsUser()
-                    .inside("--volume ${WORKSPACE}:/workdir -w /workdir") {
-                        sh 'make create-dogu-resource'
-                    }
-            archiveArtifacts 'target/k8s/*.yaml'
-        }
+        stageAutomaticRelease()
 
-        K3d k3d = new K3d(this, "${WORKSPACE}", "${WORKSPACE}/k3d", env.PATH)
-        try {
-            String doguVersion = getDoguVersion(false)
-            GString sourceDeploymentYaml = "target/k8s/${repositoryName}.yaml"
-
-            stage('Set up k3d cluster') {
-                k3d.startK3d()
-            }
-
-            stage('Setup') {
-                k3d.configureComponents([
-                                         // TODO Delete blueprint-operator and crd null values if the component runs in multinode.
-                                         "k8s-blueprint-operator": null,
-                                         "k8s-blueprint-operator-crd": null,
-                ])
-                // TODO Delete dependencies and use default if the usermgt dogu runs in multinode.
-                k3d.setup("3.2.1", ["dependencies": ["official/ldap", "official/cas", "k8s/nginx-ingress", "k8s/nginx-static", "official/postfix"], additionalDependencies: ["official/postgresql"], defaultDogu : ""])
-            }
-
-            String imageName
-            stage('Build & Push Image') {
-                // pull protected base image
-                docker.withRegistry('https://registry.cloudogu.com/', "cesmarvin-setup") {
-                    String currentBaseImage = sh(
-                            script: 'grep -m1 "registry.cloudogu.com/official/base" Dockerfile | sed "s|FROM ||g" | sed "s| as downloader||g"',
-                            returnStdout: true
-                    )
-                    currentBaseImage = currentBaseImage.trim()
-                    image = docker.image(currentBaseImage)
-                    image.pull()
-                }
-
-                String namespace = getDoguNamespace()
-                imageName = k3d.buildAndPushToLocalRegistry("${namespace}/${repositoryName}", doguVersion)
-            }
-
-            stage('Deploy Dogu') {
-                k3d.installDogu(repositoryName, imageName, sourceDeploymentYaml)
-            }
-
-            stage('Wait for Ready Rollout') {
-                k3d.waitForDeploymentRollout(repositoryName, 300, 5)
-            }
-
-            stageAutomaticRelease()
-        } catch (Exception e) {
-            k3d.collectAndArchiveLogs()
-            throw e
-        } finally {
-            stage('Remove k3d cluster') {
-                k3d.deleteK3d()
-            }
-
-            stage('Clean build artefacts'){
-                sh "rm -rf target"
-            }
-        }
     }
 }
 
@@ -173,10 +102,7 @@ void withGolangContainer(Closure closure) {
     new Docker(this)
             .image("golang:${goVersion}")
             .mountJenkinsUser()
-            .inside("-e ENVIRONMENT=ci")
-                    {
-                        closure.call()
-                    }
+            .inside("-e ENVIRONMENT=ci") { closure.call() }
 }
 
 void gitWithCredentials(String command) {
@@ -188,70 +114,16 @@ void gitWithCredentials(String command) {
     }
 }
 
-String getDoguVersion(boolean withVersionPrefix) {
-    def doguJson = this.readJSON file: 'dogu.json'
-    String version = doguJson.Version
-
-    if (withVersionPrefix) {
-        return "v" + version
-    } else {
-        return version
-    }
-}
-
-String getDoguNamespace() {
-    def doguJson = this.readJSON file: 'dogu.json'
-    return doguJson.Name.split("/")[0]
-}
-
 void stageAutomaticRelease() {
     if (gitflow.isReleaseBranch()) {
-        String releaseVersion = getDoguVersion(true)
-        String dockerReleaseVersion = getDoguVersion(false)
-        String namespace = getDoguNamespace()
-        String credentials = 'cesmarvin-setup'
-        def dockerImage
-
-        stage('Build & Push Image') {
-            dockerImage = docker.build("${namespace}/${repositoryName}:${dockerReleaseVersion}")
-            docker.withRegistry('https://registry.cloudogu.com/', credentials) {
-                dockerImage.push("${dockerReleaseVersion}")
-            }
-        }
-
-        stage('Push dogu.json') {
-            String doguJson = sh(script: "cat dogu.json", returnStdout: true)
-            HttpClient httpClient = new HttpClient(this, credentials)
-            result = httpClient.put("https://dogu.cloudogu.com/api/v2/dogus/${namespace}/${repositoryName}", "application/json", doguJson)
-            status = result["httpCode"]
-            body = result["body"]
-
-            if ((status as Integer) >= 400) {
-                echo "Error pushing dogu.json"
-                echo "${body}"
-                sh "exit 1"
-            }
-        }
+        def releaseVersion = git.getSimpleBranchName();
 
         stage('Finish Release') {
             gitflow.finishRelease(releaseVersion, productionReleaseBranch)
         }
 
-        stage('Regenerate resources for release') {
-            new Docker(this)
-                    .image("golang:${goVersion}")
-                    .mountJenkinsUser()
-                    .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}")
-                            {
-                                sh 'make create-dogu-resource'
-                            }
-        }
-
         stage('Add Github-Release') {
-            String doguVersion = getDoguVersion(false)
-            GString doguYaml = "target/k8s/${repositoryName}.yaml"
-            releaseId = github.createReleaseWithChangelog(releaseVersion, changelog, productionReleaseBranch)
-            github.addReleaseAsset("${releaseId}", "${doguYaml}")
+            github.createReleaseWithChangelog(releaseVersion, changelog, productionReleaseBranch)
         }
     }
 }

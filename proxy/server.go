@@ -2,6 +2,9 @@ package proxy
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/cloudogu/carp"
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonarcarp/authentication"
@@ -9,8 +12,6 @@ import (
 	"github.com/cloudogu/sonarcarp/config"
 	"github.com/cloudogu/sonarcarp/replicator"
 	"github.com/op/go-logging"
-	"net/http"
-	"strconv"
 )
 
 var log = logging.MustGetLogger("sonarcarp")
@@ -58,29 +59,10 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		},
 		Groups: authorization.Groups{
 			CesAdmin: configuration.CesAdminGroup,
-			Admin:    configuration.GrafanaAdminGroup,
-			Reader:   configuration.GrafanaReaderGroup,
-			Writer:   configuration.GrafanaWriterGroup,
 		},
 	})
 
-	replicatorMiddleware := replicator.CreateMiddleware(replicator.Configuration{
-		RequestUserName:     configuration.AdminUsername,
-		RequestUserPassword: configuration.AdminPassword,
-		Endpoints: replicator.Endpoints{
-			UserEndpoints: replicator.UserEndpoints{
-				CreateUserEndpoint: configuration.CreateUserEndpoint,
-				GetUserEndpoint:    configuration.GetUserEndpoint,
-			},
-			GroupEndpoints: replicator.GroupEndpoints{
-				CreateUserGroupEndpoint:     configuration.CreateGroupEndpoint,
-				GetUserGroupEndpoint:        configuration.GetUserGroupsEndpoint,
-				SearchGroupByNameEndpoint:   configuration.SearchGroupByNameEndpoint,
-				AddUserToGroupEndpoint:      configuration.AddUserToGroupEndpoint,
-				RemoveUserFromGroupEndpoint: configuration.RemoveUserFromGroupEndpoint,
-			},
-		},
-	})
+	replicatorMiddleware := replicator.CreateMiddleware(replicator.Configuration{})
 
 	router := http.NewServeMux()
 
