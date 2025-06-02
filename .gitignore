@@ -85,15 +85,7 @@ fabric.properties
 # Ignores the whole .idea folder and all .iml files
 # See https://github.com/joeblau/gitignore.io/issues/186 and https://github.com/joeblau/gitignore.io/issues/360
 
-.idea/*
-
-# Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-249601023
-
 *.iml
-modules.xml
-.idea/misc.xml
-*.ipr
-
 .idea/
 
 ### Linux ###
@@ -115,5 +107,10 @@ modules.xml
 
 dist
 .env
-target
-.bin
+target/
+.bin/
+vendor/
+sonar-home/data/
+sonar-home/logs/
+sonar-home/temp/
+sonar-home/plugins/
