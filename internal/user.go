@@ -2,16 +2,9 @@ package internal
 
 import (
 	"context"
-	"slices"
 )
 
 type Role string
-
-const (
-	RoleAdmin  Role = "Admin"
-	RoleReader Role = "Viewer"
-	RoleWriter Role = "Editor"
-)
 
 type userContextKey int
 
@@ -50,22 +43,6 @@ func (u User) getFirstAttributeOrEmptyString(key string) string {
 	}
 
 	return attributeList[0]
-}
-
-func (u User) GetRole(cesAdminGroup string, grafanaAdminGroup string, grafanaWriterGroup string) Role {
-	groups := u.GetGroups()
-
-	isAdmin := slices.Contains(groups, cesAdminGroup) || slices.Contains(groups, grafanaAdminGroup)
-	if isAdmin {
-		return RoleAdmin
-	}
-
-	isWriter := slices.Contains(groups, grafanaWriterGroup)
-	if isWriter {
-		return RoleWriter
-	}
-
-	return RoleReader
 }
 
 func WithUser(ctx context.Context, user User) context.Context {

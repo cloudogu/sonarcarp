@@ -10,14 +10,13 @@ import (
 	"github.com/cloudogu/sonarcarp/authentication"
 	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/cloudogu/sonarcarp/config"
-	"github.com/cloudogu/sonarcarp/replicator"
 	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("sonarcarp")
 
 func NewServer(configuration config.Configuration) (*http.Server, error) {
-	sHandler, err := createStaticFileHandler()
+	staticResourceHandler, err := createStaticFileHandler()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create static handler: %w", err)
 	}
@@ -57,26 +56,28 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 			Mail:      configuration.MailHeader,
 			Name:      configuration.NameHeader,
 		},
-		Groups: authorization.Groups{
-			CesAdmin: configuration.CesAdminGroup,
-		},
 	})
-
-	replicatorMiddleware := replicator.CreateMiddleware(replicator.Configuration{})
 
 	router := http.NewServeMux()
 
 	aChecker := authorization.CheckerFunc(authorization.IsAuthorized)
-	pHandler, err := createProxyHandler(configuration.Target, sHandler, aChecker, loggingMiddleware, authenticationMiddleware, authorizationMiddleware, replicatorMiddleware)
+	pHandler, err := createProxyHandler(
+		configuration.Target,
+		staticResourceHandler,
+		aChecker,
+		// loggingMiddleware,
+		authenticationMiddleware,
+		authorizationMiddleware,
+	)
 
 	router.Handle("/", pHandler)
 
 	if len(configuration.CarpResourcePath) != 0 {
-		router.Handle(configuration.CarpResourcePath, http.StripPrefix(configuration.CarpResourcePath, loggingMiddleware(sHandler)))
+		router.Handle(configuration.CarpResourcePath, http.StripPrefix(configuration.CarpResourcePath, loggingMiddleware(staticResourceHandler)))
 	}
 
 	return &http.Server{
 		Addr:    ":" + strconv.Itoa(configuration.Port),
-		Handler: loggingMiddleware(router),
+		Handler: router,
 	}, nil
 }

@@ -37,5 +37,8 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(srw, request)
 
 		log.Infof("%d %s %s", srw.httpStatusCode, request.Method, request.URL.Path)
+		if srw.httpStatusCode >= 300 {
+			log.Infof("request headers: %#v", srw.Header())
+		}
 	})
 }

@@ -1,10 +1,11 @@
 package authentication
 
 import (
-	"github.com/cloudogu/sonarcarp/internal"
-	"github.com/op/go-logging"
 	"net/http"
 	"strings"
+
+	"github.com/cloudogu/sonarcarp/internal"
+	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("sonarcarp")
@@ -46,7 +47,7 @@ func CreateMiddleware(cfg MiddlewareConfiguration) func(http.Handler) http.Handl
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debugf("AuthenticationMiddleware called with request %+v", *r)
+			log.Debugf("AuthenticationMiddleware called with request %+v", r.Header)
 
 			// casHandler initializes the general cas flow by setting the cas client in the request and checking for
 			// back channel logouts

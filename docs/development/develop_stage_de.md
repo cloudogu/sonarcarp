@@ -18,7 +18,14 @@ docker restart cas
 
 ## SonarQube starten
 ```
+export SONAR_CAS_LOCAL_IP=192.168.56.1
 docker compose up -d && docker compose logs sonar -f
+```
+
+## sonarcarp starten
+
+```
+go run ./...
 ```
 
 ## CAS-Login testen
@@ -37,7 +44,15 @@ cas`
 Bei Misserfolg kann u. U. eine manuelle Eingabe der URL http://localhost:8080/sonar/sessions/logout helfen. Diese URL wird
 in diesem `carp.yaml`-Property konfiguriert: `logout-path`
 
-## SonarQube wieder abreißen
+## Aufräumen
+
+SonarQube wieder abreißen
 ```
 docker compose stop && docker compose rm -f
 ```
+
+Ggf. ist es nötig mit root-Rechten, diese Verzeichnisse zu löschen, da diese vom Container angelegt werden:
+- sonar-home/data/
+- sonar-home/logs/
+- sonar-home/temp/
+- sonar-home/plugins/
