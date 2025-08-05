@@ -70,5 +70,17 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("Found authorized request: IP %s, XForwardedFor %s, URL %s", r.RemoteAddr, r.Header[forward.XForwardedFor], r.URL.String())
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
+
+	setHeaders(r, p.headers)
+
 	p.forwarder.ServeHTTP(w, r)
+}
+
+func setHeaders(r *http.Request, headers authorization.Headers) {
+	r.Header.Add(headers.Principal, cas.Username(r))
+
+	attrs := cas.Attributes(r)
+	r.Header.Add(headers.Name, attrs.Get("displayName"))
+	r.Header.Add(headers.Mail, attrs.Get("mail"))
+	r.Header.Add(headers.Role, attrs.Get("groups"))
 }
