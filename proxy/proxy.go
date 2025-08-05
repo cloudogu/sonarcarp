@@ -3,7 +3,6 @@ package proxy
 import (
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 
 	"github.com/vulcand/oxy/v2/forward"
@@ -37,8 +36,8 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debug("Found authorized request: IP %s, XForwardedFor %s, URL %s", r.RemoteAddr, r.Header[forward.XForwardedFor], r.URL.String())
-	//r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
-	//r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
+	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
+	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 	p.forwarder.ServeHTTP(w, r)
 }
 
@@ -58,10 +57,10 @@ func createProxyHandler(sTargetURL string, us unauthorizedServer, ac authorizati
 	}
 
 	fwd := forward.New(true)
-	fwd.Rewrite = func(proxyReq *httputil.ProxyRequest) {
-		proxyReq.Out.URL = proxyReq.In.URL // copy target URL but not the URL path, only the host
-		proxyReq.SetURL(proxyReq.Out.URL)
-	}
+	//fwd.Rewrite = func(proxyReq *httputil.ProxyRequest) {
+	//	proxyReq.Out.URL = proxyReq.In.URL // copy target URL but not the URL path, only the host
+	//	proxyReq.SetURL(proxyReq.Out.URL)
+	//}
 	//fwd := httputil.NewSingleHostReverseProxy(targetURL)
 
 	pHandler := proxyHandler{
