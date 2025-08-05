@@ -51,13 +51,10 @@ func doEverythingEverywhereAllAtOnce(fwd *httputil.ReverseProxy, casClient *cas.
 		headers:   headers,
 	}
 
-	return pHandler
+	return casClient.Handle(pHandler)
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Simon! Hier her
-	false
-	//p.casClient.Handle(p.casClient.Handle)
 	if !cas.IsAuthenticated(r) {
 		cas.RedirectToLogin(w, r)
 		return
