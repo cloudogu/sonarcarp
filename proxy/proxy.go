@@ -3,8 +3,11 @@ package proxy
 import (
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 
+	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/vulcand/oxy/v2/forward"
 )
 
@@ -23,32 +26,11 @@ type proxyHandler struct {
 	forwarder            http.Handler
 	unauthorizedServer   unauthorizedServer
 	authorizationChecker authorizationChecker
+	casClient            *cas.Client
+	headers              authorization.Headers
 }
 
-func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Debugf("proxy middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
-
-	if !p.authorizationChecker.IsAuthorized(r) {
-		log.Infof("Found unauthorized request: IP %s, X-RealIP %s, URL %s", r.RemoteAddr, r.Header[forward.XRealIP], r.URL.String())
-		p.unauthorizedServer.ServeUnauthorized(w, r)
-
-		return
-	}
-
-	log.Debug("Found authorized request: IP %s, XForwardedFor %s, URL %s", r.RemoteAddr, r.Header[forward.XForwardedFor], r.URL.String())
-	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
-	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
-	p.forwarder.ServeHTTP(w, r)
-}
-
-func applyMiddleware(h http.Handler, middlewares ...middleware) http.Handler {
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		h = middlewares[i](h)
-	}
-	return h
-}
-
-func createProxyHandler(sTargetURL string, us unauthorizedServer, ac authorizationChecker, middlewares ...middleware) (http.Handler, error) {
+func createProxyHandler(sTargetURL string, headers authorization.Headers, casClient *cas.Client) (http.Handler, error) {
 	log.Debugf("creating proxy middleware")
 
 	targetURL, err := url.Parse(sTargetURL)
@@ -57,18 +39,26 @@ func createProxyHandler(sTargetURL string, us unauthorizedServer, ac authorizati
 	}
 
 	fwd := forward.New(true)
-	//fwd.Rewrite = func(proxyReq *httputil.ProxyRequest) {
-	//	proxyReq.Out.URL = proxyReq.In.URL // copy target URL but not the URL path, only the host
-	//	proxyReq.SetURL(proxyReq.Out.URL)
-	//}
-	//fwd := httputil.NewSingleHostReverseProxy(targetURL)
 
+	return doEverythingEverywhereAllAtOnce(fwd, casClient, targetURL, headers), nil
+}
+
+func doEverythingEverywhereAllAtOnce(fwd *httputil.ReverseProxy, casClient *cas.Client, targetURL *url.URL, headers authorization.Headers) http.Handler {
 	pHandler := proxyHandler{
-		targetURL:            targetURL,
-		forwarder:            fwd,
-		unauthorizedServer:   us,
-		authorizationChecker: ac,
+		targetURL: targetURL,
+		forwarder: fwd,
+		casClient: casClient,
+		headers:   headers,
 	}
 
-	return applyMiddleware(pHandler, middlewares...), nil
+	return pHandler
+}
+
+func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Debugf("proxy middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
+
+	log.Debug("Found authorized request: IP %s, XForwardedFor %s, URL %s", r.RemoteAddr, r.Header[forward.XForwardedFor], r.URL.String())
+	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
+	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
+	p.forwarder.ServeHTTP(w, r)
 }

@@ -23,7 +23,7 @@ func TestCreateProxyHandler(t *testing.T) {
 
 		targetURL := "testURL"
 
-		handler, err := createProxyHandler(targetURL, newMockUnauthorizedServer(t), newMockAuthorizationChecker(t), middlewareMock1.Execute, middlewareMock2.Execute, middlewareMock3.Execute)
+		handler, err := createProxyHandler(targetURL,, nil)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, handler)
@@ -36,7 +36,7 @@ func TestCreateProxyHandler(t *testing.T) {
 
 		invalidTargetURL := ":example.com"
 
-		_, err := createProxyHandler(invalidTargetURL, newMockUnauthorizedServer(t), newMockAuthorizationChecker(t), middlewareMock1.Execute, middlewareMock2.Execute, middlewareMock3.Execute)
+		_, err := createProxyHandler(invalidTargetURL,, nil)
 
 		middlewareMock1.AssertNotCalled(t, "Execute", mock.Anything)
 		middlewareMock2.AssertNotCalled(t, "Execute", mock.Anything)

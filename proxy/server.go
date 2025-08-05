@@ -6,8 +6,6 @@ import (
 	"strconv"
 
 	"github.com/cloudogu/carp"
-	"github.com/cloudogu/go-cas"
-	"github.com/cloudogu/sonarcarp/authentication"
 	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/cloudogu/sonarcarp/config"
 	"github.com/op/go-logging"
@@ -21,7 +19,7 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		return nil, fmt.Errorf("failed to create static handler: %w", err)
 	}
 
-	clientFactory, err := carp.NewCasClientFactory(carp.Configuration{
+	casClientFactory, err := carp.NewCasClientFactory(carp.Configuration{
 		CasUrl:                             configuration.CasUrl,
 		ServiceUrl:                         configuration.ServiceUrl,
 		SkipSSLVerification:                configuration.SkipSSLVerification,
@@ -31,43 +29,21 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		return nil, fmt.Errorf("failed to create cas client factory: %w", err)
 	}
 
-	authenticationMiddleware := authentication.CreateMiddleware(authentication.MiddlewareConfiguration{
-		CasClientSet: authentication.CasClientSet{
-			BrowserClient: clientFactory.CreateClient(),
-			RestClient:    clientFactory.CreateRestClient(),
-		},
-		Authenticator: authentication.Authenticator{
-			ForwardUnauthenticatedRESTRequests: configuration.ForwardUnauthenticatedRESTRequests,
-			IsAuthenticated:                    authentication.GetCasIsAuthenticated(cas.IsAuthenticated),
-			RedirectToLogin:                    cas.RedirectToLogin,
-			RedirectToLogout:                   cas.RedirectToLogout,
-			IsFirstAuthenticatedRequest:        cas.IsFirstAuthenticatedRequest,
-			Username:                           cas.Username,
-			Attributes: func(r *http.Request) map[string][]string {
-				return cas.Attributes(r)
-			},
-		},
-	})
+	casClient := casClientFactory.CreateClient()
 
-	authorizationMiddleware := authorization.CreateMiddleware(authorization.MiddlewareConfiguration{
-		Headers: authorization.Headers{
-			Principal: configuration.PrincipalHeader,
-			Role:      configuration.RoleHeader,
-			Mail:      configuration.MailHeader,
-			Name:      configuration.NameHeader,
-		},
-	})
+	headers := authorization.Headers{
+		Principal: configuration.PrincipalHeader,
+		Role:      configuration.RoleHeader,
+		Mail:      configuration.MailHeader,
+		Name:      configuration.NameHeader,
+	}
 
 	router := http.NewServeMux()
 
-	aChecker := authorization.CheckerFunc(authorization.IsAuthorized)
 	pHandler, err := createProxyHandler(
 		configuration.Target,
-		staticResourceHandler,
-		aChecker,
-		// loggingMiddleware,
-		authenticationMiddleware,
-		authorizationMiddleware,
+		headers,
+		casClient,
 	)
 
 	router.Handle("/", pHandler)
