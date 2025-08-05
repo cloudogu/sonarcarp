@@ -14,6 +14,8 @@ import (
 	"github.com/vulcand/oxy/v2/forward"
 )
 
+const helloWorldJson = `{"hello":"world"}`
+
 type authHandler struct {
 	originalServerAddress string
 	proxySrv              *httputil.ReverseProxy
@@ -30,7 +32,6 @@ func (ah *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestCheckBody(t *testing.T) {
-	const helloWorldJson = `{"hello":"world"}`
 	testSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -38,12 +39,12 @@ func TestCheckBody(t *testing.T) {
 		assert.Equal(t, body, []byte(helloWorldJson))
 
 		w.WriteHeader(200)
-		_, err = w.Write([]byte("hello golang"))
+		_, err = w.Write([]byte("hello golang" + string(body)))
 		require.NoError(t, err)
 	}))
 	defer testSrv.Close()
 
-	req, err := http.NewRequest(http.MethodPost, testSrv.URL, bytes.NewBuffer([]byte(helloWorldJson)))
+	req, err := http.NewRequest(http.MethodPost, testSrv.URL+"/", bytes.NewBuffer([]byte(helloWorldJson)))
 	req.Header["Content-Type"] = []string{"application/x-www-form-urlencoded"}
 	require.NoError(t, err)
 
@@ -65,4 +66,16 @@ func TestCheckBody(t *testing.T) {
 	_, err = do.Body.Read(actualRespBody)
 	require.NoError(t, err)
 	assert.Equal(t, "asdf", actualRespBody)
+}
+
+func TestLeTest(t *testing.T) {
+	bodyNopCloser := io.NopCloser(bytes.NewReader([]byte(helloWorldJson)))
+	limRead := io.LimitReader(bodyNopCloser, 17)
+	bodyBytes := make([]byte, 17)
+
+	_, err := limRead.Read(bodyBytes)
+	require.NoError(t, err)
+
+	assert.Len(t, bodyBytes, 17)
+	assert.Equal(t, []byte(helloWorldJson), bodyBytes)
 }

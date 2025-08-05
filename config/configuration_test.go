@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const templateConfig = `
@@ -19,8 +20,6 @@ principal-header: X-WEBAUTH-USER
 role-header: X-WEBAUTH-ROLE
 mail-header: X-WEBAUTH-EMAIL
 name-header: X-WEBAUTH-NAME
-admin-username: admin
-admin-password: admin
 create-user-endpoint: http://localhost:3000/grafana/api/admin/users
 create-group-endpoint: http://localhost:3000/grafana/api/teams
 get-user-groups-endpoint: http://localhost:3000/grafana/api/users/%v/teams
@@ -123,8 +122,6 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "X-WEBAUTH-ROLE", config.RoleHeader)
 	assert.Equal(t, "X-WEBAUTH-EMAIL", config.MailHeader)
 	assert.Equal(t, "X-WEBAUTH-NAME", config.NameHeader)
-	assert.Equal(t, "admin", config.AdminUsername)
-	assert.Equal(t, "admin", config.AdminPassword)
 	assert.Equal(t, "http://localhost:3000/grafana/api/admin/users", config.CreateUserEndpoint)
 	assert.Equal(t, "http://localhost:3000/grafana/api/teams", config.CreateGroupEndpoint)
 	assert.Equal(t, "http://localhost:3000/grafana/api/users/%v/teams", config.GetUserGroupsEndpoint)

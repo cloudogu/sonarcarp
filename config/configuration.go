@@ -27,8 +27,6 @@ type Configuration struct {
 	ForwardUnauthenticatedRESTRequests bool   `yaml:"forward-unauthenticated-rest-requests"`
 	LoggingFormat                      string `yaml:"log-format"`
 	LogLevel                           string `yaml:"log-level"`
-	AdminUsername                      string `yaml:"admin-username"`
-	AdminPassword                      string `yaml:"admin-password"`
 	CreateUserEndpoint                 string `yaml:"create-user-endpoint"`
 	CreateGroupEndpoint                string `yaml:"create-group-endpoint"`
 	GetUserGroupsEndpoint              string `yaml:"get-user-groups-endpoint"`

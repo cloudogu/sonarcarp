@@ -1,7 +1,10 @@
 package authentication
 
 import (
+	"bytes"
+	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/cloudogu/sonarcarp/internal"
@@ -47,7 +50,7 @@ func CreateMiddleware(cfg MiddlewareConfiguration) func(http.Handler) http.Handl
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debugf("AuthenticationMiddleware called with request %+v", r.Header)
+			log.Debugf("authentication middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
 
 			// casHandler initializes the general cas flow by setting the cas client in the request and checking for
 			// back channel logouts
@@ -60,13 +63,36 @@ func CreateMiddleware(cfg MiddlewareConfiguration) func(http.Handler) http.Handl
 			browserHandler := casHandler(authenticationHandler)
 
 			if isBrowserRequest(r) {
-				log.Debugf("Request is browser request")
+				contentLength := r.Header.Get("Content-Length")
+				bodyBytes := []byte{}
+				if contentLength != "" && contentLength != "0" {
+					parseInt, err := strconv.ParseInt(contentLength, 10, 32)
+					if err != nil {
+						log.Errorf("Error parsing Content-Length header %s", r.Header.Get("Content-Length"))
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+					if parseInt > 0 {
+						bodyBytes, err = io.ReadAll(r.Body)
+						if err != nil {
+							log.Errorf("Error reading body %s", r.Header.Get("Content-Length"))
+							w.WriteHeader(http.StatusInternalServerError)
+							return
+						}
+					}
+				}
+
+				if bodyBytes != nil {
+					r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+				}
+
 				browserHandler.ServeHTTP(w, r)
 
+				if bodyBytes != nil {
+					r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+				}
 				return
 			}
-
-			log.Debugf("Request is REST request")
 
 			if cfg.ForwardUnauthenticatedRESTRequests {
 				log.Debugf("Unauthenticated REST request is allowed")
@@ -107,14 +133,31 @@ func authenticationMiddleware(next http.Handler, a Authenticator) http.Handler {
 		userCtx := internal.WithUser(r.Context(), user)
 		userReq := r.WithContext(userCtx)
 
+		bodyBytes := []byte{}
+		if bodyBytes != nil {
+			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		}
+
 		next.ServeHTTP(w, userReq)
+
+		if bodyBytes != nil {
+			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		}
+
 	})
 }
 
 func isBrowserRequest(req *http.Request) bool {
 	userAgent := req.Header.Get("User-Agent")
 
-	return strings.Contains(strings.ToLower(userAgent), "mozilla")
+	isBrowser := strings.Contains(strings.ToLower(userAgent), "mozilla")
+	if isBrowser {
+		log.Debugf("Request is Browser request")
+	} else {
+		log.Debugf("Request is REST request")
+	}
+
+	return isBrowser
 }
 
 func GetCasIsAuthenticated(isAuthenticated func(r *http.Request) bool) IsAuthenticated {

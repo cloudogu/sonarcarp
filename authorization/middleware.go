@@ -37,17 +37,17 @@ func CreateMiddleware(config MiddlewareConfiguration) func(http.Handler) http.Ha
 	authHeader = config.Headers.Principal
 
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			log.Debugf("Authorization middleware is called")
+		return http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
+			log.Debugf("Authorization middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
 
-			ctx := request.Context()
+			ctx := r.Context()
 
 			if authentication.UnauthenticatedRequestAllowed(ctx) {
-				next.ServeHTTP(writer, request)
+				next.ServeHTTP(writer, r)
 				return
 			}
 
-			ctxUser, ok := internal.GetUser(request.Context())
+			ctxUser, ok := internal.GetUser(r.Context())
 			if !ok {
 				writer.WriteHeader(http.StatusInternalServerError)
 				_, err := writer.Write([]byte("Could not extract user from request"))
@@ -63,10 +63,10 @@ func CreateMiddleware(config MiddlewareConfiguration) func(http.Handler) http.Ha
 			uGroups := authUser.GetGroups()
 			log.Debugf("User %s has groups: %v", authUser.UserName, uGroups)
 
-			setHeaders(request, authUser, config.Headers)
-			log.Debugf("Set new request headers after authorization: %v", request.Header)
+			setHeaders(r, authUser, config.Headers)
+			log.Debugf("Set new request headers after authorization: %v", r.Header)
 
-			next.ServeHTTP(writer, request)
+			next.ServeHTTP(writer, r)
 		})
 	}
 }

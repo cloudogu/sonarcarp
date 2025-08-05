@@ -76,6 +76,8 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		router.Handle(configuration.CarpResourcePath, http.StripPrefix(configuration.CarpResourcePath, loggingMiddleware(staticResourceHandler)))
 	}
 
+	log.Debugf("starting server on port %d", configuration.Port)
+
 	return &http.Server{
 		Addr:    ":" + strconv.Itoa(configuration.Port),
 		Handler: router,
