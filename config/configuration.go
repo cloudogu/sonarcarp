@@ -14,8 +14,6 @@ type Configuration struct {
 	BaseUrl                            string `yaml:"base-url"`
 	CasUrl                             string `yaml:"cas-url"`
 	ServiceUrl                         string `yaml:"service-url"`
-	Target                             string `yaml:"target-url"`
-	ResourcePath                       string `yaml:"resource-path"`
 	SkipSSLVerification                bool   `yaml:"skip-ssl-verification"`
 	Port                               int    `yaml:"port"`
 	PrincipalHeader                    string `yaml:"principal-header"`
@@ -27,18 +25,6 @@ type Configuration struct {
 	ForwardUnauthenticatedRESTRequests bool   `yaml:"forward-unauthenticated-rest-requests"`
 	LoggingFormat                      string `yaml:"log-format"`
 	LogLevel                           string `yaml:"log-level"`
-	CreateUserEndpoint                 string `yaml:"create-user-endpoint"`
-	CreateGroupEndpoint                string `yaml:"create-group-endpoint"`
-	GetUserGroupsEndpoint              string `yaml:"get-user-groups-endpoint"`
-	GetUserEndpoint                    string `yaml:"get-user-endpoint"`
-	AddUserToGroupEndpoint             string `yaml:"add-user-to-group-endpoint"`
-	RemoveUserFromGroupEndpoint        string `yaml:"remove-user-from-group-endpoint"`
-	SearchGroupByNameEndpoint          string `yaml:"search-team-by-name-endpoint"`
-	SetOrganizationRoleEndpoint        string `yaml:"set-organization-role-endpoint"`
-	CesAdminGroup                      string `yaml:"ces-admin-group"`
-	GrafanaAdminGroup                  string `yaml:"grafana-admin-group"`
-	GrafanaWriterGroup                 string `yaml:"grafana-writer-group"`
-	GrafanaReaderGroup                 string `yaml:"grafana-reader-group"`
 	ApplicationExecCommand             string `yaml:"application-exec-command"`
 	CarpResourcePath                   string `yaml:"carp-resource-path"`
 }

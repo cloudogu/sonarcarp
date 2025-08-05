@@ -55,6 +55,19 @@ func doEverythingEverywhereAllAtOnce(fwd *httputil.ReverseProxy, casClient *cas.
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Simon! Hier her
+	false
+	//p.casClient.Handle(p.casClient.Handle)
+	if !cas.IsAuthenticated(r) {
+		cas.RedirectToLogin(w, r)
+		return
+	}
+
+	if r.URL.Path == "/logout" {
+		cas.RedirectToLogout(w, r)
+		return
+	}
+
 	log.Debugf("proxy middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
 
 	log.Debug("Found authorized request: IP %s, XForwardedFor %s, URL %s", r.RemoteAddr, r.Header[forward.XForwardedFor], r.URL.String())

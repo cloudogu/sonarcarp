@@ -5,7 +5,7 @@ base-url: http://localhost:8080/sonar/
 cas-url: https://192.168.56.2/cas
 
 # Change the port of this url if you run your local sonarqube under another port
-target-url: http://localhost:9000/
+service-url: http://localhost:9000/
 logout-method: GET
 logout-path: /sonar/api/authentication/logout
 

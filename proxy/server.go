@@ -1,14 +1,18 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"strconv"
 
-	"github.com/cloudogu/carp"
+	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/cloudogu/sonarcarp/config"
 	"github.com/op/go-logging"
+	"github.com/pkg/errors"
 )
 
 var log = logging.MustGetLogger("sonarcarp")
@@ -19,17 +23,10 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		return nil, fmt.Errorf("failed to create static handler: %w", err)
 	}
 
-	casClientFactory, err := carp.NewCasClientFactory(carp.Configuration{
-		CasUrl:                             configuration.CasUrl,
-		ServiceUrl:                         configuration.ServiceUrl,
-		SkipSSLVerification:                configuration.SkipSSLVerification,
-		ForwardUnauthenticatedRESTRequests: configuration.ForwardUnauthenticatedRESTRequests,
-	})
+	casClient, err := NewCasClientFactory(configuration)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create cas client factory: %w", err)
+		return nil, fmt.Errorf("failed to create CAS client: %w", err)
 	}
-
-	casClient := casClientFactory.CreateClient()
 
 	headers := authorization.Headers{
 		Principal: configuration.PrincipalHeader,
@@ -41,7 +38,7 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 	router := http.NewServeMux()
 
 	pHandler, err := createProxyHandler(
-		configuration.Target,
+		configuration.ServiceUrl,
 		headers,
 		casClient,
 	)
@@ -58,4 +55,33 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		Addr:    ":" + strconv.Itoa(configuration.Port),
 		Handler: router,
 	}, nil
+}
+
+func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error) {
+	casUrl, err := url.Parse(configuration.CasUrl)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse cas url: %s", configuration.CasUrl)
+	}
+
+	serviceUrl, err := url.Parse(configuration.ServiceUrl)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse service url: %s", configuration.ServiceUrl)
+	}
+
+	urlScheme := cas.NewDefaultURLScheme(casUrl)
+	urlScheme.ServiceValidatePath = path.Join("p3", "serviceValidate")
+
+	httpClient := &http.Client{}
+	if configuration.SkipSSLVerification {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		httpClient.Transport = transport
+	}
+
+	return cas.NewClient(&cas.Options{
+		URL:       serviceUrl,
+		Client:    httpClient,
+		URLScheme: urlScheme,
+	}), nil
 }
