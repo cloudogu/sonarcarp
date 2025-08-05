@@ -18,14 +18,14 @@ var (
 	log     = logging.MustGetLogger("sonarcarp")
 )
 
-func startGrafanaInBackground(configuration config.Configuration) {
+func startPayloadInBackground(configuration config.Configuration) {
 	// FIXME
 	if true {
 		return
 	}
 
-	log.Infof("Start Grafana in background..")
-	log.Debugf("Execute command '%s'", configuration.GrafanaExecCommand)
+	log.Infof("Start payload application in background..")
+	log.Debugf("Execute command '%s'", configuration.ApplicationExecCommand)
 	splitted := strings.Split("/opt/grafana/bin/grafana server --config /opt/grafana/conf/defaults.ini --config /opt/grafana/conf/custom.ini", " ")
 	cmd := exec.Command(splitted[0], splitted[1:]...)
 
@@ -72,7 +72,7 @@ func main() {
 
 	log.Infof("start carp in version %s", Version)
 
-	startGrafanaInBackground(configuration)
+	startPayloadInBackground(configuration)
 
 	server, err := proxy.NewServer(configuration)
 	if err != nil {

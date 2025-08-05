@@ -136,6 +136,6 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "reader", config.GrafanaReaderGroup)
 	assert.Equal(t, "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}", config.LoggingFormat)
 	assert.Equal(t, "DEBUG", config.LogLevel)
-	assert.Equal(t, "exit 0", config.GrafanaExecCommand)
+	assert.Equal(t, "exit 0", config.ApplicationExecCommand)
 	assert.Equal(t, "/grafana/carp-static", config.CarpResourcePath)
 }

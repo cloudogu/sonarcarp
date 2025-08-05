@@ -39,7 +39,7 @@ type Configuration struct {
 	GrafanaAdminGroup                  string `yaml:"grafana-admin-group"`
 	GrafanaWriterGroup                 string `yaml:"grafana-writer-group"`
 	GrafanaReaderGroup                 string `yaml:"grafana-reader-group"`
-	GrafanaExecCommand                 string `yaml:"grafana-exec-command"`
+	ApplicationExecCommand             string `yaml:"application-exec-command"`
 	CarpResourcePath                   string `yaml:"carp-resource-path"`
 }
 
