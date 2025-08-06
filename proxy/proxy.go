@@ -1,7 +1,9 @@
 package proxy
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -51,19 +53,41 @@ func doEverythingEverywhereAllAtOnce(fwd *httputil.ReverseProxy, casClient *cas.
 		headers:   headers,
 	}
 
-	return casClient.Handle(pHandler)
+	return mainHandler{
+		casClient:       casClient,
+		originalHandler: pHandler,
+	}
+}
+
+func PrintBody(r *http.Request, msg string) {
+	fmt.Println("==================================")
+	fmt.Printf("msg: %s\n", msg)
+	bd, _ := io.ReadAll(r.Body)
+	fmt.Printf("body: '%s'\n", string(bd))
+	r.Body = io.NopCloser(bytes.NewBuffer(bd))
+	fmt.Println("<=================================")
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	PrintBody(r, "1")
+
 	if !cas.IsAuthenticated(r) {
 		cas.RedirectToLogin(w, r)
+		PrintBody(r, "2")
+
 		return
 	}
 
+	PrintBody(r, "3")
+
 	if r.URL.Path == "/logout" {
+		PrintBody(r, "4")
+
 		cas.RedirectToLogout(w, r)
 		return
 	}
+
+	PrintBody(r, "5")
 
 	log.Debugf("proxy middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
 
@@ -73,7 +97,10 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	setHeaders(r, p.headers)
 
+	PrintBody(r, "6")
+
 	p.forwarder.ServeHTTP(w, r)
+	PrintBody(r, "7")
 }
 
 func setHeaders(r *http.Request, headers authorization.Headers) {
