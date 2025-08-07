@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -19,14 +20,9 @@ var (
 )
 
 func startPayloadInBackground(configuration config.Configuration) {
-	// FIXME
-	if true {
-		return
-	}
-
 	log.Infof("Start payload application in background..")
 	log.Debugf("Execute command '%s'", configuration.ApplicationExecCommand)
-	splitted := strings.Split("/opt/grafana/bin/grafana server --config /opt/grafana/conf/defaults.ini --config /opt/grafana/conf/custom.ini", " ")
+	splitted := strings.Split(configuration.ApplicationExecCommand, " ")
 	cmd := exec.Command(splitted[0], splitted[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -66,6 +62,7 @@ func main() {
 	flag.Parse()
 
 	configuration, err := config.InitializeAndReadConfiguration()
+	fmt.Println(configuration)
 	if err != nil {
 		panic(err)
 	}

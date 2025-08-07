@@ -19,7 +19,7 @@ mail-header: X-Forwarded-Email
 name-header: X-Forwarded-Name
 log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
 log-level: DEBUG
-grafana-exec-command: "exit 0"
+application-exec-command: "sleep infinity"
 carp-resource-path: /grafana/carp-static/
 
 
