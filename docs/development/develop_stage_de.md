@@ -22,6 +22,8 @@ export SONAR_CAS_LOCAL_IP=192.168.56.1
 docker compose up -d && docker compose logs sonar -f
 ```
 
+Hinweis: Falls sonar nicht startet, könnte es an den Permissions liegen. Dafür zum Beispiel einfach `sudo chmod -R 777 ./sonar-home` ausführen.
+
 ## sonarcarp starten
 
 ```
