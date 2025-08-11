@@ -2,13 +2,13 @@ package proxy
 
 import (
 	"fmt"
-	"github.com/cloudogu/sonarcarp/cashelper"
-	"net/http"
-	"net/url"
-
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/vulcand/oxy/v2/forward"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
 )
 
 type authorizationChecker interface {
@@ -20,15 +20,17 @@ type unauthorizedServer interface {
 }
 
 type proxyHandler struct {
-	targetURL            *url.URL
-	forwarder            http.Handler
-	unauthorizedServer   unauthorizedServer
-	authorizationChecker authorizationChecker
-	casClient            *cas.Client
-	headers              authorization.Headers
+	targetURL             *url.URL
+	forwarder             http.Handler
+	unauthorizedServer    unauthorizedServer
+	authorizationChecker  authorizationChecker
+	casClient             *cas.Client
+	headers               authorization.Headers
+	logoutPath            string
+	logoutRedirectionPath string
 }
 
-func createProxyHandler(sTargetURL string, headers authorization.Headers, casClient *cas.Client) (http.Handler, error) {
+func createProxyHandler(sTargetURL string, headers authorization.Headers, casClient *cas.Client, logoutPath string, logoutRedirectionPath string) (http.Handler, error) {
 	log.Debugf("creating proxy middleware")
 
 	targetURL, err := url.Parse(sTargetURL)
@@ -39,23 +41,54 @@ func createProxyHandler(sTargetURL string, headers authorization.Headers, casCli
 	fwd := forward.New(true)
 
 	pHandler := proxyHandler{
-		targetURL: targetURL,
-		forwarder: fwd,
-		casClient: casClient,
-		headers:   headers,
+		targetURL:             targetURL,
+		forwarder:             fwd,
+		casClient:             casClient,
+		headers:               headers,
+		logoutPath:            logoutPath,
+		logoutRedirectionPath: logoutRedirectionPath,
 	}
 
-	return cashelper.NewHandler(pHandler, casClient), nil
+	return casClient.CreateHandler(pHandler), nil
+}
+
+func (p proxyHandler) isLogoutRequest(r *http.Request) bool {
+	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
+	// So in that case we use the referrer to check if a request is a logout request.
+	return strings.HasSuffix(r.Referer(), p.logoutPath) && r.URL.Path == p.logoutRedirectionPath
+}
+
+func (p proxyHandler) performLogout(w http.ResponseWriter, r *http.Request) {
+	// Remove cas session cookie for /sonar
+	http.SetCookie(w, &http.Cookie{
+		Name:    "_cas_session",
+		Value:   "",
+		Path:    "/sonar",
+		MaxAge:  -1,
+		Expires: time.Unix(0, 0),
+	})
+
+	// Remove cas session cookie for / => In some cases the cookie is set for root path, make sure to also delete it
+	http.SetCookie(w, &http.Cookie{
+		Name:    "_cas_session",
+		Value:   "",
+		Path:    "/",
+		MaxAge:  -1,
+		Expires: time.Unix(0, 0),
+	})
+
+	// Redirect to /cas/logout
+	cas.RedirectToLogout(w, r)
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !cas.IsAuthenticated(r) {
-		cas.RedirectToLogin(w, r)
+	if p.isLogoutRequest(r) {
+		p.performLogout(w, r)
 		return
 	}
 
-	if r.URL.Path == "/logout" {
-		cas.RedirectToLogout(w, r)
+	if !cas.IsAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
+		cas.RedirectToLogin(w, r)
 		return
 	}
 

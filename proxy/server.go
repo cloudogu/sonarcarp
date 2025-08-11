@@ -41,6 +41,8 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		configuration.ServiceUrl,
 		headers,
 		casClient,
+		configuration.LogoutPath,
+		configuration.LogoutRedirectPath,
 	)
 
 	router.Handle("/", pHandler)
@@ -83,5 +85,8 @@ func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error
 		URL:       serviceUrl,
 		Client:    httpClient,
 		URLScheme: urlScheme,
+		// Explicit disable the normal logout flow of go-cas as it consumes the form-body
+		LogoutMethod: "NEVER",
+		LogoutPath:   "/never-reach-this-path",
 	}), nil
 }

@@ -2,6 +2,8 @@ package authentication
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/cloudogu/go-cas"
 	"io"
 	"net/http"
 	"strconv"
@@ -50,6 +52,13 @@ func CreateMiddleware(cfg MiddlewareConfiguration) func(http.Handler) http.Handl
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("===================================================>>")
+			fmt.Println("===================================================>>")
+			fmt.Println("===================================================>>")
+			fmt.Println("===================================================>>")
+			fmt.Println("===================================================>>")
+			panic("asdasdsad")
+			cas.RedirectToLogout(w, r)
 			log.Debugf("authentication middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
 
 			// casHandler initializes the general cas flow by setting the cas client in the request and checking for

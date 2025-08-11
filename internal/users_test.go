@@ -122,51 +122,6 @@ func TestGetMail(t *testing.T) {
 	})
 }
 
-func TestGetRole(t *testing.T) {
-	t.Run("get CesAdmin", func(t *testing.T) {
-		u := createUser(map[string][]string{
-			"groups": {"a"},
-		})
-
-		role := u.GetRole("a", "b", "c")
-		assert.Equal(t, RoleAdmin, role)
-	})
-
-	t.Run("get GrafanaAdmin", func(t *testing.T) {
-		u := createUser(map[string][]string{
-			"groups": {"b"},
-		})
-
-		role := u.GetRole("a", "b", "c")
-		assert.Equal(t, RoleAdmin, role)
-	})
-
-	t.Run("get Writer", func(t *testing.T) {
-		u := createUser(map[string][]string{
-			"groups": {"c"},
-		})
-
-		role := u.GetRole("a", "b", "c")
-		assert.Equal(t, RoleWriter, role)
-	})
-
-	t.Run("get Reader - wrong group", func(t *testing.T) {
-		u := createUser(map[string][]string{
-			"groups": {"nothing"},
-		})
-
-		role := u.GetRole("a", "b", "c")
-		assert.Equal(t, RoleReader, role)
-	})
-
-	t.Run("get Reader - no group", func(t *testing.T) {
-		u := createUser(map[string][]string{})
-
-		role := u.GetRole("a", "b", "c")
-		assert.Equal(t, RoleReader, role)
-	})
-}
-
 func createUser(attributes map[string][]string) User {
 	u := User{
 		UserName:   "TestUser",

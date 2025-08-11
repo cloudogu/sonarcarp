@@ -20,7 +20,7 @@ type Configuration struct {
 	RoleHeader                         string `yaml:"role-header"`
 	MailHeader                         string `yaml:"mail-header"`
 	NameHeader                         string `yaml:"name-header"`
-	LogoutMethod                       string `yaml:"logout-method"`
+	LogoutRedirectPath                 string `yaml:"logout-redirect-path"`
 	LogoutPath                         string `yaml:"logout-path"`
 	ForwardUnauthenticatedRESTRequests bool   `yaml:"forward-unauthenticated-rest-requests"`
 	LoggingFormat                      string `yaml:"log-format"`

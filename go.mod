@@ -1,6 +1,8 @@
 module github.com/cloudogu/sonarcarp
 
-go 1.24
+go 1.24.4
+
+replace github.com/cloudogu/go-cas => /home/sklein/IdeaProjects/go-cas
 
 require (
 	github.com/cloudogu/go-cas v2.2.2+incompatible
@@ -13,12 +15,11 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/glog v1.2.0 // indirect
+	github.com/golang/glog v1.2.5 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	gopkg.in/cas.v1 v1.2.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

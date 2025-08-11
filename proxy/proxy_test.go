@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/cloudogu/sonarcarp/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,17 +14,9 @@ import (
 
 func TestCreateProxyHandler(t *testing.T) {
 	t.Run("create handler", func(t *testing.T) {
-		middlewareMock1 := newMockMiddleware(t)
-		middlewareMock2 := newMockMiddleware(t)
-		middlewareMock3 := newMockMiddleware(t)
-
-		middlewareMock1.EXPECT().Execute(mock.Anything).Return(&mocks.Handler{}).Once()
-		middlewareMock2.EXPECT().Execute(mock.Anything).Return(&mocks.Handler{}).Once()
-		middlewareMock3.EXPECT().Execute(mock.Anything).Return(&mocks.Handler{}).Once()
-
 		targetURL := "testURL"
 
-		handler, err := createProxyHandler(targetURL,, nil)
+		handler, err := createProxyHandler(targetURL, authorization.Headers{}, nil, "", "")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, handler)
@@ -36,7 +29,7 @@ func TestCreateProxyHandler(t *testing.T) {
 
 		invalidTargetURL := ":example.com"
 
-		_, err := createProxyHandler(invalidTargetURL,, nil)
+		_, err := createProxyHandler(invalidTargetURL, authorization.Headers{}, nil, "", "")
 
 		middlewareMock1.AssertNotCalled(t, "Execute", mock.Anything)
 		middlewareMock2.AssertNotCalled(t, "Execute", mock.Anything)

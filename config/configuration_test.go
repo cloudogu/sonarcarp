@@ -33,7 +33,7 @@ grafana-admin-group: admin
 grafana-writer-group: writer
 grafana-reader-group: reader
 log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
-grafana-exec-command: "exit 0"
+application-exec-command: "exit 0"
 carp-resource-path: /grafana/carp-static
 `
 
@@ -113,7 +113,6 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "https://localhost:8080", config.BaseUrl)
 	assert.Equal(t, "https://192.168.56.2/cas", config.CasUrl)
 	assert.Equal(t, "https://localhost:8080/grafana/login", config.ServiceUrl)
-	assert.Equal(t, "http://localhost:3000/grafana/login", config.Target)
 	assert.Equal(t, "GET", config.LogoutMethod)
 	assert.Equal(t, "\\/grafana\\/(cas\\/)?logout", config.LogoutPath)
 	assert.Equal(t, true, config.SkipSSLVerification)
@@ -122,18 +121,6 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "X-WEBAUTH-ROLE", config.RoleHeader)
 	assert.Equal(t, "X-WEBAUTH-EMAIL", config.MailHeader)
 	assert.Equal(t, "X-WEBAUTH-NAME", config.NameHeader)
-	assert.Equal(t, "http://localhost:3000/grafana/api/admin/users", config.CreateUserEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/teams", config.CreateGroupEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/users/%v/teams", config.GetUserGroupsEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/users/lookup?loginOrEmail=%s", config.GetUserEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/teams/%v/members/%v", config.RemoveUserFromGroupEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/teams/%v/members", config.AddUserToGroupEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/teams/search?name=%s", config.SearchGroupByNameEndpoint)
-	assert.Equal(t, "http://localhost:3000/grafana/api/orgs/1/users/%v", config.SetOrganizationRoleEndpoint)
-	assert.Equal(t, "cesAdmin", config.CesAdminGroup)
-	assert.Equal(t, "admin", config.GrafanaAdminGroup)
-	assert.Equal(t, "writer", config.GrafanaWriterGroup)
-	assert.Equal(t, "reader", config.GrafanaReaderGroup)
 	assert.Equal(t, "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}", config.LoggingFormat)
 	assert.Equal(t, "DEBUG", config.LogLevel)
 	assert.Equal(t, "exit 0", config.ApplicationExecCommand)

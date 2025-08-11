@@ -6,8 +6,8 @@ cas-url: https://192.168.56.2/cas
 
 # Change the port of this url if you run your local sonarqube under another port
 service-url: http://localhost:9000/
-logout-method: GET
-logout-path: /sonar/api/authentication/logout
+logout-path: /sonar/sessions/logout
+logout-redirect-path: /sonar/
 
 skip-ssl-verification: true
 # Change this port if you run the carp locally under another port
