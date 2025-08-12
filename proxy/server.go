@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/cloudogu/go-cas"
-	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/cloudogu/sonarcarp/config"
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"
@@ -28,7 +27,7 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		return nil, fmt.Errorf("failed to create CAS client: %w", err)
 	}
 
-	headers := authorization.Headers{
+	headers := authorizationHeaders{
 		Principal: configuration.PrincipalHeader,
 		Role:      configuration.RoleHeader,
 		Mail:      configuration.MailHeader,

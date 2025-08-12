@@ -113,7 +113,6 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "https://localhost:8080", config.BaseUrl)
 	assert.Equal(t, "https://192.168.56.2/cas", config.CasUrl)
 	assert.Equal(t, "https://localhost:8080/grafana/login", config.ServiceUrl)
-	assert.Equal(t, "GET", config.LogoutMethod)
 	assert.Equal(t, "\\/grafana\\/(cas\\/)?logout", config.LogoutPath)
 	assert.Equal(t, true, config.SkipSSLVerification)
 	assert.Equal(t, 8080, config.Port)

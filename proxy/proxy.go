@@ -3,7 +3,6 @@ package proxy
 import (
 	"fmt"
 	"github.com/cloudogu/go-cas"
-	"github.com/cloudogu/sonarcarp/authorization"
 	"github.com/vulcand/oxy/v2/forward"
 	"net/http"
 	"net/url"
@@ -19,18 +18,25 @@ type unauthorizedServer interface {
 	ServeUnauthorized(writer http.ResponseWriter, req *http.Request)
 }
 
+type authorizationHeaders struct {
+	Principal string
+	Role      string
+	Mail      string
+	Name      string
+}
+
 type proxyHandler struct {
 	targetURL             *url.URL
 	forwarder             http.Handler
 	unauthorizedServer    unauthorizedServer
 	authorizationChecker  authorizationChecker
 	casClient             *cas.Client
-	headers               authorization.Headers
+	headers               authorizationHeaders
 	logoutPath            string
 	logoutRedirectionPath string
 }
 
-func createProxyHandler(sTargetURL string, headers authorization.Headers, casClient *cas.Client, logoutPath string, logoutRedirectionPath string) (http.Handler, error) {
+func createProxyHandler(sTargetURL string, headers authorizationHeaders, casClient *cas.Client, logoutPath string, logoutRedirectionPath string) (http.Handler, error) {
 	log.Debugf("creating proxy middleware")
 
 	targetURL, err := url.Parse(sTargetURL)
@@ -103,7 +109,7 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.forwarder.ServeHTTP(w, r)
 }
 
-func setHeaders(r *http.Request, headers authorization.Headers) {
+func setHeaders(r *http.Request, headers authorizationHeaders) {
 	r.Header.Add(headers.Principal, cas.Username(r))
 
 	attrs := cas.Attributes(r)

@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/cloudogu/sonarcarp/authorization"
+	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonarcarp/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,7 +16,7 @@ func TestCreateProxyHandler(t *testing.T) {
 	t.Run("create handler", func(t *testing.T) {
 		targetURL := "testURL"
 
-		handler, err := createProxyHandler(targetURL, authorization.Headers{}, nil, "", "")
+		handler, err := createProxyHandler(targetURL, authorizationHeaders{}, &cas.Client{}, "", "")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, handler)
@@ -29,7 +29,7 @@ func TestCreateProxyHandler(t *testing.T) {
 
 		invalidTargetURL := ":example.com"
 
-		_, err := createProxyHandler(invalidTargetURL, authorization.Headers{}, nil, "", "")
+		_, err := createProxyHandler(invalidTargetURL, authorizationHeaders{}, nil, "", "")
 
 		middlewareMock1.AssertNotCalled(t, "Execute", mock.Anything)
 		middlewareMock2.AssertNotCalled(t, "Execute", mock.Anything)
