@@ -2,10 +2,8 @@ module github.com/cloudogu/sonarcarp
 
 go 1.24.4
 
-replace github.com/cloudogu/go-cas => /home/sklein/IdeaProjects/go-cas
-
 require (
-	github.com/cloudogu/go-cas v2.2.2+incompatible
+	github.com/cloudogu/go-cas v1.2.1-0.20250812105647-d40569900db6
 	github.com/op/go-logging v0.0.0-20160211212156-b2cb9fa56473
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0

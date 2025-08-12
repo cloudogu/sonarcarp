@@ -86,7 +86,8 @@ func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error
 		Client:    httpClient,
 		URLScheme: urlScheme,
 		// Explicit disable the normal logout flow of go-cas as it consumes the form-body
-		LogoutMethod: "NEVER",
-		LogoutPath:   "/never-reach-this-path",
+		IsLogoutRequest: func(r *http.Request) bool {
+			return false
+		},
 	}), nil
 }
