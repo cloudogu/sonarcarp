@@ -11,7 +11,6 @@ import (
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonarcarp/config"
 	"github.com/op/go-logging"
-	"github.com/pkg/errors"
 )
 
 var log = logging.MustGetLogger("sonarcarp")
@@ -61,12 +60,12 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error) {
 	casUrl, err := url.Parse(configuration.CasUrl)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse cas url: %s", configuration.CasUrl)
+		return nil, fmt.Errorf("failed to parse cas url: %s: %w", configuration.CasUrl, err)
 	}
 
 	serviceUrl, err := url.Parse(configuration.ServiceUrl)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse service url: %s", configuration.ServiceUrl)
+		return nil, fmt.Errorf("failed to parse service url: %s: %w", configuration.ServiceUrl, err)
 	}
 
 	urlScheme := cas.NewDefaultURLScheme(casUrl)
