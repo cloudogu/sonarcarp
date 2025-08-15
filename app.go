@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -62,7 +61,6 @@ func main() {
 	flag.Parse()
 
 	configuration, err := config.InitializeAndReadConfiguration()
-	fmt.Println(configuration)
 	if err != nil {
 		panic(err)
 	}

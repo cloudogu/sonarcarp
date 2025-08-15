@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type authorizationChecker interface {
@@ -64,32 +63,9 @@ func (p proxyHandler) isLogoutRequest(r *http.Request) bool {
 	return strings.HasSuffix(r.Referer(), p.logoutPath) && r.URL.Path == p.logoutRedirectionPath
 }
 
-func (p proxyHandler) performLogout(w http.ResponseWriter, r *http.Request) {
-	// Remove cas session cookie for /sonar
-	http.SetCookie(w, &http.Cookie{
-		Name:    "_cas_session",
-		Value:   "",
-		Path:    "/sonar",
-		MaxAge:  -1,
-		Expires: time.Unix(0, 0),
-	})
-
-	// Remove cas session cookie for / => In some cases the cookie is set for root path, make sure to also delete it
-	http.SetCookie(w, &http.Cookie{
-		Name:    "_cas_session",
-		Value:   "",
-		Path:    "/",
-		MaxAge:  -1,
-		Expires: time.Unix(0, 0),
-	})
-
-	// Redirect to /cas/logout
-	cas.RedirectToLogout(w, r)
-}
-
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if p.isLogoutRequest(r) {
-		p.performLogout(w, r)
+		cas.RedirectToLogout(w, r)
 		return
 	}
 
